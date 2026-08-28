@@ -102,7 +102,10 @@ include /usr/share/linux-packaging-snippets/kernel-snippet.mk
 %:
 	dh $@
 
+override_dh_auto_configure: debian/data/initramfs/droidian-initramfs.cpio
+
 debian/data/initramfs/droidian-initramfs.cpio:
+	mkdir -p $$(dirname $@)
 	if [ -f /usr/lib/$(DEB_HOST_MULTIARCH)/halium-generic-initramfs/initrd.img-halium-generic.lz4 ]; then \
 		lz4 -c -d /usr/lib/$(DEB_HOST_MULTIARCH)/halium-generic-initramfs/initrd.img-halium-generic.lz4 >$@; \
 	else \
@@ -111,10 +114,17 @@ debian/data/initramfs/droidian-initramfs.cpio:
 RULES
 chmod +x debian/rules
 
+# Force absolute path for CONFIG_INITRAMFS_SOURCE so Kbuild finds it correctly
+cat > debian/initramfs_fix.config <<EOF
+CONFIG_INITRAMFS_SOURCE="${GITHUB_WORKSPACE:-/buildd}/builder/debian/data/initramfs/droidian-initramfs.cpio"
+EOF
+echo "KERNEL_CONFIG_EXTRA_FRAGMENTS += debian/initramfs_fix.config" >> debian/kernel-info.mk
+
 echo "  - Created: debian/kernel-info.mk"
 echo "  - Created: debian/compat"
 echo "  - Created: debian/source/format"
 echo "  - Created: debian/rules"
+echo "  - Created: debian/initramfs_fix.config"
 echo ""
 
 # -------------------------------------------------------
