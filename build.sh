@@ -257,6 +257,30 @@ mk-build-deps --install --remove \
     --tool='apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y' \
     debian/control 2>/dev/null || true
 
+# Workaround: Build latest initramfs-tools-halium from GitHub to get smaller initramfs
+echo "  - Cloning and building latest initramfs-tools-halium..."
+apt-get install -y debootstrap qemu-user-static binfmt-support dpkg-dev
+rm -rf /tmp/initramfs-tools-halium
+git clone https://github.com/droidian/initramfs-tools-halium /tmp/initramfs-tools-halium
+(
+    cd /tmp/initramfs-tools-halium
+    COMP=$(grep -E "^KERNEL_INITRAMFS_COMPRESSION\s*=" "${KERNEL_INFO_MK}" | head -1 | sed 's/.*=\s*//' | sed 's/\s*$//')
+    [ -z "$COMP" ] && COMP="gzip"
+    
+    if [ "$COMP" = "lz4" ]; then
+        EXT=".lz4"
+    else
+        EXT=""
+    fi
+    
+    ./build-initrd.sh -a "${DEB_BUILD_FOR}" -c "$COMP" -n "initrd.img-halium-generic${EXT}"
+    
+    # Overwrite the old initrd installed by apt
+    mkdir -p "/usr/lib/aarch64-linux-gnu/halium-generic-initramfs/"
+    cp -v out/initrd.img-halium-generic* "/usr/lib/aarch64-linux-gnu/halium-generic-initramfs/"
+)
+echo ""
+
 # Verify clang is accessible
 BUILD_PATH_VAL=$(parse_mk_var "BUILD_PATH" "")
 # Resolve makefile variable in BUILD_PATH (e.g. $(CLANG_VERSION))
