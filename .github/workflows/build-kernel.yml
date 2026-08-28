@@ -4,14 +4,15 @@ on:
   workflow_dispatch:
     inputs:
       kernel_source:
-        description: 'URL of the kernel source repository (e.g. https://github.com/user/kernel-source)'
+        description: "URL of the kernel source repository (e.g. https://github.com/user/kernel-source)"
         required: true
         type: string
+        default: "https://gitlab.com/alghiffaryfa19/kernel-android-common"
       kernel_branch:
-        description: 'Branch of the kernel source to build'
+        description: "Branch of the kernel source to build"
         required: true
         type: string
-        default: 'main'
+        default: "android13-5.15-halium"
 
 jobs:
   build:
