@@ -118,6 +118,7 @@ chmod +x debian/rules
 cat > debian/initramfs_fix.config <<EOF
 CONFIG_INITRAMFS_SOURCE="${GITHUB_WORKSPACE:-/buildd}/builder/debian/data/initramfs/droidian-initramfs.cpio"
 EOF
+echo "" >> debian/kernel-info.mk
 echo "KERNEL_CONFIG_EXTRA_FRAGMENTS += debian/initramfs_fix.config" >> debian/kernel-info.mk
 
 echo "  - Created: debian/kernel-info.mk"
