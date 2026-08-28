@@ -21,7 +21,7 @@ jobs:
 
     steps:
       - name: Checkout builder repo
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           path: builder
           submodules: recursive
@@ -48,6 +48,7 @@ jobs:
         run: |
           echo "=== Built packages ==="
           ls -lah packages/*.deb 2>/dev/null || echo "No .deb packages found"
+          echo "=== Boot images ==="
           ls -lah packages/*.img 2>/dev/null || echo "No .img files found"
 
       - name: Upload kernel packages
@@ -61,7 +62,6 @@ jobs:
 
       - name: Upload boot images
         uses: actions/upload-artifact@v4
-        if: always()
         with:
           name: droidian-boot-images
           path: |
