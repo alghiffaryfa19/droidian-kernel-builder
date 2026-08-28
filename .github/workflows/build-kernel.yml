@@ -1,0 +1,69 @@
+name: Build Droidian Kernel
+
+on:
+  workflow_dispatch:
+    inputs:
+      kernel_source:
+        description: 'URL of the kernel source repository (e.g. https://github.com/user/kernel-source)'
+        required: true
+        type: string
+      kernel_branch:
+        description: 'Branch of the kernel source to build'
+        required: true
+        type: string
+        default: 'main'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Build Kernel Package
+
+    steps:
+      - name: Checkout builder repo
+        uses: actions/checkout@v4
+        with:
+          path: builder
+          submodules: recursive
+
+      - name: Clone kernel source
+        run: |
+          git clone --depth=1 -b "${{ github.event.inputs.kernel_branch }}" \
+            "${{ github.event.inputs.kernel_source }}" kernel-source
+
+      - name: Prepare output directory
+        run: mkdir -p packages
+
+      - name: Build kernel in Droidian container
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}/packages:/buildd" \
+            -v "${{ github.workspace }}/kernel-source:/buildd/sources" \
+            -v "${{ github.workspace }}/builder:/buildd/builder" \
+            -v "${{ github.workspace }}/builder/build.sh:/buildd/build.sh" \
+            quay.io/droidian/build-essential:current-amd64 \
+            bash /buildd/build.sh
+
+      - name: List built packages
+        run: |
+          echo "=== Built packages ==="
+          ls -lah packages/*.deb 2>/dev/null || echo "No .deb packages found"
+          ls -lah packages/*.img 2>/dev/null || echo "No .img files found"
+
+      - name: Upload kernel packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: droidian-kernel-packages
+          path: |
+            packages/*.deb
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload boot images
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: droidian-boot-images
+          path: |
+            packages/*.img
+          if-no-files-found: ignore
+          retention-days: 30
