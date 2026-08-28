@@ -287,8 +287,32 @@ echo "============================================"
 echo " Build complete!"
 echo "============================================"
 echo ""
+
+# Extract boot.img from build output and .deb packages
+echo "Collecting boot images..."
+
+# Copy all .img files from kernel build output
+if [ -d "out/KERNEL_OBJ" ]; then
+    find "out/KERNEL_OBJ" -maxdepth 1 -name "*.img" -exec cp -v {} /buildd/ \;
+    echo "  - Copied .img files from kernel build output"
+fi
+
+# Also extract boot.img from linux-bootimage .deb if available
+for deb in /buildd/linux-bootimage-*.deb; do
+    if [ -f "$deb" ]; then
+        echo "  - Extracting images from $(basename $deb)..."
+        tmpdir=$(mktemp -d)
+        dpkg-deb -x "$deb" "$tmpdir"
+        find "$tmpdir" -name "*.img" -exec cp -v {} /buildd/ \;
+        rm -rf "$tmpdir"
+    fi
+done
+
+echo ""
 echo "Built packages:"
 ls -lah /buildd/*.deb 2>/dev/null || echo "  No .deb files found in /buildd/"
+echo ""
+echo "Boot images:"
 ls -lah /buildd/*.img 2>/dev/null || echo "  No .img files found in /buildd/"
 echo ""
 echo "Done."
