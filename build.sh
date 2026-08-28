@@ -229,6 +229,7 @@ apt-get install -y \
     linux-packaging-snippets \
     bc bison flex libssl-dev libelf-dev cpio kmod \
     python3 python-is-python3 \
+    dwarves \
     rsync lz4 || true
 
 # Install DEB_TOOLCHAIN packages if specified
