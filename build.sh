@@ -297,16 +297,7 @@ if [ -d "out/KERNEL_OBJ" ]; then
     echo "  - Copied .img files from kernel build output"
 fi
 
-# Also extract boot.img from linux-bootimage .deb if available
-for deb in /buildd/linux-bootimage-*.deb; do
-    if [ -f "$deb" ]; then
-        echo "  - Extracting images from $(basename $deb)..."
-        tmpdir=$(mktemp -d)
-        dpkg-deb -x "$deb" "$tmpdir"
-        find "$tmpdir" -name "*.img" -exec cp -v {} /buildd/ \;
-        rm -rf "$tmpdir"
-    fi
-done
+
 
 echo ""
 echo "Built packages:"
