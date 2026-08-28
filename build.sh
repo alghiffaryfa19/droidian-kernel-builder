@@ -211,8 +211,8 @@ apt-get update -qq
 
 # Explicitly install clang/llvm toolchain
 if [ -n "${CLANG_VERSION}" ] && [ "${CLANG_CUSTOM}" != "1" ]; then
-    echo "  - Installing clang-android-${CLANG_VERSION} and llvm-android-${CLANG_VERSION}..."
-    apt-get install -y clang-android-${CLANG_VERSION} llvm-android-${CLANG_VERSION} || {
+    echo "  - Installing clang-android-${CLANG_VERSION}..."
+    apt-get install -y clang-android-${CLANG_VERSION} || {
         echo "ERROR: Failed to install clang-android-${CLANG_VERSION}"
         echo "Available clang-android packages:"
         apt-cache search clang-android || true
