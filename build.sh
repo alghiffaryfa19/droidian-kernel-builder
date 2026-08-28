@@ -207,21 +207,63 @@ echo ""
 # -------------------------------------------------------
 echo "[6/7] Installing build dependencies..."
 
-# Add droidian repos if not already present (for clang-android, etc.)
-if ! grep -q "repo.droidian.org" /etc/apt/sources.list.d/*.list 2>/dev/null && \
-   ! grep -q "repo.droidian.org" /etc/apt/sources.list 2>/dev/null; then
-    echo "  - Droidian repo should already be available in the container"
-fi
-
 apt-get update -qq
 
-# Use mk-build-deps to install all Build-Depends from debian/control
+# Explicitly install clang/llvm toolchain
+if [ -n "${CLANG_VERSION}" ] && [ "${CLANG_CUSTOM}" != "1" ]; then
+    echo "  - Installing clang-android-${CLANG_VERSION} and llvm-android-${CLANG_VERSION}..."
+    apt-get install -y clang-android-${CLANG_VERSION} llvm-android-${CLANG_VERSION} || {
+        echo "ERROR: Failed to install clang-android-${CLANG_VERSION}"
+        echo "Available clang-android packages:"
+        apt-cache search clang-android || true
+        exit 1
+    }
+fi
+
+# Install cross-compiler and kernel build tools
+echo "  - Installing cross-compiler and build tools..."
+apt-get install -y \
+    binutils-aarch64-linux-gnu \
+    gcc-aarch64-linux-gnu \
+    g++-aarch64-linux-gnu \
+    linux-packaging-snippets \
+    bc bison flex libssl-dev libelf-dev cpio kmod \
+    python3 python-is-python3 \
+    rsync lz4 || true
+
+# Install DEB_TOOLCHAIN packages if specified
+if [ -n "${DEB_TOOLCHAIN}" ]; then
+    echo "  - Installing DEB_TOOLCHAIN packages..."
+    # Convert comma-separated list to space-separated, remove arch qualifiers
+    TOOLCHAIN_PKGS=$(echo "${DEB_TOOLCHAIN}" | tr ',' '\n' | sed 's/^ *//' | sed 's/ *$//' | sed 's/:arm64//g' | tr '\n' ' ')
+    apt-get install -y ${TOOLCHAIN_PKGS} || {
+        echo "  WARNING: Some DEB_TOOLCHAIN packages failed to install, continuing anyway..."
+    }
+fi
+
+# Try mk-build-deps as fallback for any remaining deps
 mk-build-deps --install --remove \
     --tool='apt-get -o Debug::pkgProblemResolver=yes --no-install-recommends -y' \
-    debian/control || {
-    echo "WARNING: mk-build-deps failed, attempting manual dependency install..."
-    RELENG_HOST_ARCH="${DEB_BUILD_FOR}" apt-get build-dep -y . || true
-}
+    debian/control 2>/dev/null || true
+
+# Verify clang is accessible
+BUILD_PATH_VAL=$(parse_mk_var "BUILD_PATH" "")
+# Resolve makefile variable in BUILD_PATH (e.g. $(CLANG_VERSION))
+BUILD_PATH_VAL=$(echo "$BUILD_PATH_VAL" | sed "s/\$(CLANG_VERSION)/${CLANG_VERSION}/g")
+
+echo ""
+echo "  - Verifying toolchain..."
+if [ -n "${BUILD_PATH_VAL}" ]; then
+    echo "  - BUILD_PATH: ${BUILD_PATH_VAL}"
+    ls -la "${BUILD_PATH_VAL}/clang" 2>/dev/null && echo "  - clang found at ${BUILD_PATH_VAL}/clang" || {
+        echo "  - clang not found at ${BUILD_PATH_VAL}/clang"
+        echo "  - Contents of ${BUILD_PATH_VAL}:"
+        ls -la "${BUILD_PATH_VAL}/" 2>/dev/null || echo "    Directory does not exist!"
+        echo "  - Searching for clang..."
+        find /usr/lib/llvm-android* -name "clang" 2>/dev/null || echo "    No clang found in /usr/lib/llvm-android*"
+        which clang 2>/dev/null || true
+    }
+fi
 
 echo ""
 
