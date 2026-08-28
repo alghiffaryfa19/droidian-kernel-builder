@@ -60,6 +60,11 @@ echo ""
 echo "[3/7] Installing linux-packaging-snippets..."
 apt-get update -qq
 apt-get install -y -qq linux-packaging-snippets devscripts equivs
+
+# Workaround: Use the latest linux-packaging-snippets from GitHub to get init_boot.img support
+echo "  - Cloning latest linux-packaging-snippets to get init_boot.img support..."
+rm -rf /usr/share/linux-packaging-snippets
+git clone https://github.com/droidian/linux-packaging-snippets -b droidian /usr/share/linux-packaging-snippets
 echo ""
 
 # -------------------------------------------------------
