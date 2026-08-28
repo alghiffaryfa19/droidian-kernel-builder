@@ -207,6 +207,8 @@ echo ""
 # -------------------------------------------------------
 echo "[6/7] Installing build dependencies..."
 
+# Enable arm64 architecture for cross-packages (e.g. linux-initramfs-halium-generic:arm64)
+dpkg --add-architecture arm64
 apt-get update -qq
 
 # Explicitly install clang/llvm toolchain
@@ -235,10 +237,13 @@ apt-get install -y \
 # Install DEB_TOOLCHAIN packages if specified
 if [ -n "${DEB_TOOLCHAIN}" ]; then
     echo "  - Installing DEB_TOOLCHAIN packages..."
-    # Convert comma-separated list to space-separated, remove arch qualifiers
-    TOOLCHAIN_PKGS=$(echo "${DEB_TOOLCHAIN}" | tr ',' '\n' | sed 's/^ *//' | sed 's/ *$//' | sed 's/:arm64//g' | tr '\n' ' ')
+    # Convert comma-separated list to space-separated, keep arch qualifiers like :arm64
+    TOOLCHAIN_PKGS=$(echo "${DEB_TOOLCHAIN}" | tr ',' '\n' | sed 's/^ *//' | sed 's/ *$//' | tr '\n' ' ')
     apt-get install -y ${TOOLCHAIN_PKGS} || {
-        echo "  WARNING: Some DEB_TOOLCHAIN packages failed to install, continuing anyway..."
+        echo "  WARNING: Some DEB_TOOLCHAIN packages failed to install, trying one by one..."
+        for pkg in ${TOOLCHAIN_PKGS}; do
+            apt-get install -y "$pkg" || echo "    SKIP: $pkg"
+        done
     }
 fi
 
