@@ -111,10 +111,19 @@ debian/data/initramfs/droidian-initramfs.cpio:
 RULES
 chmod +x debian/rules
 
+# Create initramfs config fragment to embed the cpio into the kernel and shrink init_boot
+cat > debian/initramfs.config <<'EOF'
+CONFIG_INITRAMFS_SOURCE="debian/data/initramfs/droidian-initramfs.cpio"
+EOF
+
+# Append it to kernel-info.mk so kernel-snippet.mk picks it up
+echo "KERNEL_CONFIG_EXTRA_FRAGMENTS += debian/initramfs.config" >> debian/kernel-info.mk
+
 echo "  - Created: debian/kernel-info.mk"
 echo "  - Created: debian/compat"
 echo "  - Created: debian/source/format"
 echo "  - Created: debian/rules"
+echo "  - Created: debian/initramfs.config"
 echo ""
 
 # -------------------------------------------------------
