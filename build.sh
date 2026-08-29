@@ -125,6 +125,10 @@ cat > debian/lto_fix.config <<EOF
 # CONFIG_LTO_CLANG_THIN is not set
 # CONFIG_CFI_CLANG is not set
 CONFIG_LTO_NONE=y
+# Limit mem usage by disabling debug info
+# CONFIG_DEBUG_INFO is not set
+# CONFIG_DEBUG_INFO_BTF is not set
+# CONFIG_DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT is not set
 EOF
 
 echo "" >> debian/kernel-info.mk
@@ -313,7 +317,8 @@ echo "[7/7] Building kernel packages..."
 echo "  This may take a while..."
 echo ""
 
-dpkg-buildpackage -d -b --no-sign -a"${DEB_BUILD_FOR}" -j"$(nproc)"
+# Limit jobs to 1 to avoid running out of memory (OOM killer / GitHub runner crash)
+dpkg-buildpackage -d -b --no-sign -a"${DEB_BUILD_FOR}" -j1
 
 echo ""
 echo "============================================"
