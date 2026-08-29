@@ -26,6 +26,11 @@ jobs:
           path: builder
           submodules: recursive
 
+      - name: Set up swap space
+        uses: pierotofy/set-swap-space@master
+        with:
+          swap-size-gb: 10
+
       - name: Clone kernel source
         run: |
           git clone --depth=1 -b "${{ github.event.inputs.kernel_branch }}" \
