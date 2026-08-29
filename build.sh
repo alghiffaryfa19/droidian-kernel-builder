@@ -131,8 +131,6 @@ CONFIG_LTO_NONE=y
 # CONFIG_DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT is not set
 EOF
 
-echo "" >> debian/kernel-info.mk
-echo "KERNEL_CONFIG_EXTRA_FRAGMENTS += debian/initramfs_fix.config debian/lto_fix.config" >> debian/kernel-info.mk
 
 echo "  - Created: debian/kernel-info.mk"
 echo "  - Created: debian/compat"

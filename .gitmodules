@@ -1,4 +1,4 @@
 [submodule "droidian/common_fragments"]
 	path = droidian/common_fragments
-	url = https://github.com/droidian-devices/common_fragments
-	branch = 6.1-android-common
+	url = https://github.com/alghiffaryfa19/common_fragments
+	branch = 5.15-android-common
