@@ -107,10 +107,19 @@ override_dh_auto_configure: debian/data/initramfs/droidian-initramfs.cpio
 debian/data/initramfs/droidian-initramfs.cpio:
 	mkdir -p $$(dirname $@)
 	if [ -f /usr/lib/$(DEB_HOST_MULTIARCH)/halium-generic-initramfs/initrd.img-halium-generic.lz4 ]; then \
-		lz4 -c -d /usr/lib/$(DEB_HOST_MULTIARCH)/halium-generic-initramfs/initrd.img-halium-generic.lz4 >$@; \
+		lz4 -c -d /usr/lib/$(DEB_HOST_MULTIARCH)/halium-generic-initramfs/initrd.img-halium-generic.lz4 >$@.tmp; \
 	else \
-		gunzip -c /usr/lib/$(DEB_HOST_MULTIARCH)/halium-generic-initramfs/initrd.img-halium-generic >$@; \
+		gunzip -c /usr/lib/$(DEB_HOST_MULTIARCH)/halium-generic-initramfs/initrd.img-halium-generic >$@.tmp; \
 	fi
+	mkdir -p $$(dirname $@)/tmp-initramfs
+	cd $$(dirname $@)/tmp-initramfs && cpio -idm < ../$$(basename $@).tmp
+	# Patch init script: increase timeout to 45s and use blkid to find userdata
+	if [ -f $$(dirname $@)/tmp-initramfs/init ]; then \
+		sed -i 's/-lt 150/-lt 450/g' $$(dirname $@)/tmp-initramfs/init; \
+		sed -i 's/USERDATA=\/dev\/block\/sda14/USERDATA=""\nfor dev in \/dev\/block\/sd*; do\n  [ -b "$$dev" ] || continue\n  LABEL=$$(blkid "$$dev" 2>\/dev\/null | grep -o '\''LABEL="[^"]*"'\'' | sed '\''s\/LABEL="\/\/;s\/"\/\/'\'')\n  if [ "$$LABEL" = "droidian" ]; then\n    USERDATA="$$dev"\n    break\n  fi\ndone\n[ -z "$$USERDATA" ] \&\& USERDATA=\/dev\/block\/sda29/g' $$(dirname $@)/tmp-initramfs/init; \
+	fi
+	cd $$(dirname $@)/tmp-initramfs && find . | cpio -H newc -o > ../$$(basename $@)
+	rm -rf $$(dirname $@)/tmp-initramfs $@.tmp
 RULES
 chmod +x debian/rules
 
