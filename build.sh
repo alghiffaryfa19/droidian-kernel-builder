@@ -118,8 +118,16 @@ chmod +x debian/rules
 cat > debian/initramfs_fix.config <<EOF
 CONFIG_INITRAMFS_SOURCE="${GITHUB_WORKSPACE:-/buildd}/builder/debian/data/initramfs/droidian-initramfs.cpio"
 EOF
+
+# Force LTO_NONE to prevent OOM killer on GitHub Actions
+cat > debian/lto_fix.config <<EOF
+# CONFIG_LTO_CLANG_FULL is not set
+# CONFIG_LTO_CLANG_THIN is not set
+CONFIG_LTO_NONE=y
+EOF
+
 echo "" >> debian/kernel-info.mk
-echo "KERNEL_CONFIG_EXTRA_FRAGMENTS += debian/initramfs_fix.config" >> debian/kernel-info.mk
+echo "KERNEL_CONFIG_EXTRA_FRAGMENTS += debian/initramfs_fix.config debian/lto_fix.config" >> debian/kernel-info.mk
 
 echo "  - Created: debian/kernel-info.mk"
 echo "  - Created: debian/compat"
