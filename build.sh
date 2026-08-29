@@ -123,6 +123,7 @@ EOF
 cat > debian/lto_fix.config <<EOF
 # CONFIG_LTO_CLANG_FULL is not set
 # CONFIG_LTO_CLANG_THIN is not set
+# CONFIG_CFI_CLANG is not set
 CONFIG_LTO_NONE=y
 EOF
 
