@@ -114,29 +114,22 @@ debian/data/initramfs/droidian-initramfs.cpio:
 RULES
 chmod +x debian/rules
 
-# Force absolute path for CONFIG_INITRAMFS_SOURCE so Kbuild finds it correctly
-cat > debian/initramfs_fix.config <<EOF
-CONFIG_INITRAMFS_SOURCE="${GITHUB_WORKSPACE:-/buildd}/builder/debian/data/initramfs/droidian-initramfs.cpio"
+# Ensure initramfs fixes are applied by appending them to droidian.config
+if [ -f "droidian/common_fragments/droidian.config" ]; then
+    echo "" >> droidian/common_fragments/droidian.config
+    echo "# --- Appended by build.sh ---" >> droidian/common_fragments/droidian.config
+    
+    # Force absolute path for CONFIG_INITRAMFS_SOURCE so Kbuild finds it correctly
+    cat >> droidian/common_fragments/droidian.config <<EOF
+CONFIG_INITRAMFS_SOURCE="${SOURCES_DIR}/debian/data/initramfs/droidian-initramfs.cpio"
 EOF
-
-# Force LTO_NONE to prevent OOM killer on GitHub Actions
-cat > debian/lto_fix.config <<EOF
-# CONFIG_LTO_CLANG_FULL is not set
-# CONFIG_LTO_CLANG_THIN is not set
-# CONFIG_CFI_CLANG is not set
-CONFIG_LTO_NONE=y
-# Limit mem usage by disabling debug info
-# CONFIG_DEBUG_INFO is not set
-# CONFIG_DEBUG_INFO_BTF is not set
-# CONFIG_DEBUG_INFO_DWARF_TOOLCHAIN_DEFAULT is not set
-EOF
-
+    echo "  - Appended initramfs absolute path fix to droidian.config"
+fi
 
 echo "  - Created: debian/kernel-info.mk"
 echo "  - Created: debian/compat"
 echo "  - Created: debian/source/format"
 echo "  - Created: debian/rules"
-echo "  - Created: debian/initramfs_fix.config"
 echo ""
 
 # -------------------------------------------------------
