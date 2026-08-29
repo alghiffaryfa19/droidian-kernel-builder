@@ -17,6 +17,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+permissions:
+      contents: write
     name: Build Kernel Package
 
     steps:
@@ -73,3 +75,16 @@ jobs:
             packages/*.img
           if-no-files-found: ignore
           retention-days: 30
+
+      - name: Generate Release Tag
+        run: echo "RELEASE_TAG=$(date +'%Y%m%d%H%M')" >> $GITHUB_ENV
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: droidian-kernel-${{ env.RELEASE_TAG }}
+          name: Droidian Kernel Build ${{ env.RELEASE_TAG }}
+          files: |
+            packages/*.img
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
