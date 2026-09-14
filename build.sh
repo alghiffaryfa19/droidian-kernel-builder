@@ -65,6 +65,10 @@ apt-get install -y -qq linux-packaging-snippets devscripts equivs
 echo "  - Cloning latest linux-packaging-snippets to get init_boot.img support..."
 rm -rf /usr/share/linux-packaging-snippets
 git clone https://github.com/droidian/linux-packaging-snippets -b droidian /usr/share/linux-packaging-snippets
+if [ -d "/buildd/builder/prebuilt-initramfs" ]; then
+    echo "  - Patching linux-packaging-snippets to use prebuilt initramfs..."
+    sed -i 's|/usr/lib/$(DEB_HOST_MULTIARCH)/halium-generic-initramfs|/buildd/builder/prebuilt-initramfs|g' /usr/share/linux-packaging-snippets/kernel-snippet.mk
+fi
 echo ""
 
 # -------------------------------------------------------
@@ -122,6 +126,9 @@ debian/data/initramfs/droidian-initramfs.cpio:
 	rm -rf $$(dirname $@)/tmp-initramfs $@.tmp
 RULES
 chmod +x debian/rules
+if [ -d "/buildd/builder/prebuilt-initramfs" ]; then
+    sed -i 's|/usr/lib/$(DEB_HOST_MULTIARCH)/halium-generic-initramfs|/buildd/builder/prebuilt-initramfs|g' debian/rules
+fi
 
 # Ensure initramfs fixes are applied by appending them to droidian.config
 if [ -f "droidian/common_fragments/droidian.config" ]; then
@@ -309,19 +316,6 @@ if [ -n "${BUILD_PATH_VAL}" ]; then
 fi
 
 echo ""
-
-# -------------------------------------------------------
-# Setup prebuilt initramfs if available
-# -------------------------------------------------------
-PREBUILT_INITRAMFS="/buildd/builder/prebuilt-initramfs"
-if [ -d "$PREBUILT_INITRAMFS" ]; then
-    echo "  - Injecting prebuilt initramfs into system path..."
-    MULTIARCH=$(dpkg-architecture -qDEB_HOST_MULTIARCH -a"${DEB_BUILD_FOR}" 2>/dev/null || echo "aarch64-linux-gnu")
-    TARGET_DIR="/usr/lib/${MULTIARCH}/halium-generic-initramfs"
-    mkdir -p "${TARGET_DIR}"
-    cp -v "${PREBUILT_INITRAMFS}/"* "${TARGET_DIR}/" || true
-    echo "  - Prebuilt initramfs injected successfully."
-fi
 
 # -------------------------------------------------------
 # Step 7: Build the kernel
