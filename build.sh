@@ -66,6 +66,14 @@ echo "  - Cloning latest linux-packaging-snippets to get init_boot.img support..
 rm -rf /usr/share/linux-packaging-snippets
 git clone https://github.com/droidian/linux-packaging-snippets -b droidian /usr/share/linux-packaging-snippets
 if [ -d "/buildd/builder/prebuilt-initramfs" ]; then
+    echo "  - Fixing prebuilt initramfs filenames (replacing -lz4 with .lz4)..."
+    if [ -f "/buildd/builder/prebuilt-initramfs/initrd.img-halium-generic-lz4" ]; then
+        mv "/buildd/builder/prebuilt-initramfs/initrd.img-halium-generic-lz4" "/buildd/builder/prebuilt-initramfs/initrd.img-halium-generic.lz4"
+    fi
+    if [ -f "/buildd/builder/prebuilt-initramfs/recovery-initramfs.img-halium-generic-lz4" ]; then
+        mv "/buildd/builder/prebuilt-initramfs/recovery-initramfs.img-halium-generic-lz4" "/buildd/builder/prebuilt-initramfs/recovery-initramfs.img-halium-generic.lz4"
+    fi
+
     echo "  - Patching linux-packaging-snippets to use prebuilt initramfs..."
     sed -i 's|/usr/lib/$(DEB_HOST_MULTIARCH)/halium-generic-initramfs|/buildd/builder/prebuilt-initramfs|g' /usr/share/linux-packaging-snippets/kernel-snippet.mk
 fi
