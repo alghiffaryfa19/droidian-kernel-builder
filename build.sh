@@ -127,6 +127,9 @@ RULES
 chmod +x debian/rules
 if [ -d "/buildd/builder/prebuilt-initramfs" ]; then
     sed -i 's|/usr/lib/$(DEB_HOST_MULTIARCH)/halium-generic-initramfs|/buildd/builder/prebuilt-initramfs|g' debian/rules
+    # Patch kernel-snippet.mk to use unmkinitramfs instead of cpio -i, to correctly handle multi-archive initramfs
+    sed -i 's#lz4 -c -d \([^ ]*\) | cpio -i\(;\?\)$#unmkinitramfs \1 .\2#g' /usr/share/linux-packaging-snippets/kernel-snippet.mk
+    sed -i 's#gunzip -c \([^ ]*\) | cpio -i\(;\?\)$#unmkinitramfs \1 .\2#g' /usr/share/linux-packaging-snippets/kernel-snippet.mk
 fi
 
 # Ensure initramfs fixes are applied by appending them to droidian.config
