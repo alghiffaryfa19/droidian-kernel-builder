@@ -106,17 +106,9 @@ override_dh_auto_configure: debian/data/initramfs/droidian-initramfs.cpio
 
 debian/data/initramfs/droidian-initramfs.cpio:
 	mkdir -p $$(dirname $@)
-	if [ -f /buildd/builder/prebuilt-initramfs/initrd.img-halium-generic-lz4 ]; then \
-		echo "  Using prebuilt initramfs (lz4) from builder repo"; \
-		lz4 -c -d /buildd/builder/prebuilt-initramfs/initrd.img-halium-generic-lz4 >$@.tmp; \
-	elif [ -f /buildd/builder/prebuilt-initramfs/initrd.img-halium-generic ]; then \
-		echo "  Using prebuilt initramfs (gzip) from builder repo"; \
-		gunzip -c /buildd/builder/prebuilt-initramfs/initrd.img-halium-generic >$@.tmp; \
-	elif [ -f /usr/lib/$(DEB_HOST_MULTIARCH)/halium-generic-initramfs/initrd.img-halium-generic.lz4 ]; then \
-		echo "  Using system initramfs (lz4) from Debian package"; \
+	if [ -f /usr/lib/$(DEB_HOST_MULTIARCH)/halium-generic-initramfs/initrd.img-halium-generic.lz4 ]; then \
 		lz4 -c -d /usr/lib/$(DEB_HOST_MULTIARCH)/halium-generic-initramfs/initrd.img-halium-generic.lz4 >$@.tmp; \
 	else \
-		echo "  Using system initramfs (gzip) from Debian package"; \
 		gunzip -c /usr/lib/$(DEB_HOST_MULTIARCH)/halium-generic-initramfs/initrd.img-halium-generic >$@.tmp; \
 	fi
 	mkdir -p $$(dirname $@)/tmp-initramfs
@@ -317,6 +309,19 @@ if [ -n "${BUILD_PATH_VAL}" ]; then
 fi
 
 echo ""
+
+# -------------------------------------------------------
+# Setup prebuilt initramfs if available
+# -------------------------------------------------------
+PREBUILT_INITRAMFS="/buildd/builder/prebuilt-initramfs"
+if [ -d "$PREBUILT_INITRAMFS" ]; then
+    echo "  - Injecting prebuilt initramfs into system path..."
+    MULTIARCH=$(dpkg-architecture -qDEB_HOST_MULTIARCH -a"${DEB_BUILD_FOR}" 2>/dev/null || echo "aarch64-linux-gnu")
+    TARGET_DIR="/usr/lib/${MULTIARCH}/halium-generic-initramfs"
+    mkdir -p "${TARGET_DIR}"
+    cp -v "${PREBUILT_INITRAMFS}/"* "${TARGET_DIR}/" || true
+    echo "  - Prebuilt initramfs injected successfully."
+fi
 
 # -------------------------------------------------------
 # Step 7: Build the kernel
