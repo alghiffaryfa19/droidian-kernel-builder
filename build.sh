@@ -106,9 +106,17 @@ override_dh_auto_configure: debian/data/initramfs/droidian-initramfs.cpio
 
 debian/data/initramfs/droidian-initramfs.cpio:
 	mkdir -p $$(dirname $@)
-	if [ -f /usr/lib/$(DEB_HOST_MULTIARCH)/halium-generic-initramfs/initrd.img-halium-generic.lz4 ]; then \
+	if [ -f /buildd/builder/prebuilt-initramfs/initrd.img-halium-generic-lz4 ]; then \
+		echo "  Using prebuilt initramfs (lz4) from builder repo"; \
+		lz4 -c -d /buildd/builder/prebuilt-initramfs/initrd.img-halium-generic-lz4 >$@.tmp; \
+	elif [ -f /buildd/builder/prebuilt-initramfs/initrd.img-halium-generic ]; then \
+		echo "  Using prebuilt initramfs (gzip) from builder repo"; \
+		gunzip -c /buildd/builder/prebuilt-initramfs/initrd.img-halium-generic >$@.tmp; \
+	elif [ -f /usr/lib/$(DEB_HOST_MULTIARCH)/halium-generic-initramfs/initrd.img-halium-generic.lz4 ]; then \
+		echo "  Using system initramfs (lz4) from Debian package"; \
 		lz4 -c -d /usr/lib/$(DEB_HOST_MULTIARCH)/halium-generic-initramfs/initrd.img-halium-generic.lz4 >$@.tmp; \
 	else \
+		echo "  Using system initramfs (gzip) from Debian package"; \
 		gunzip -c /usr/lib/$(DEB_HOST_MULTIARCH)/halium-generic-initramfs/initrd.img-halium-generic >$@.tmp; \
 	fi
 	mkdir -p $$(dirname $@)/tmp-initramfs
