@@ -38,14 +38,7 @@ jobs:
           git clone --depth=1 -b "${{ github.event.inputs.kernel_branch }}" \
             "${{ github.event.inputs.kernel_source }}" kernel-source
 
-      - name: Download prebuilt initramfs
-        run: |
-          gh run download 34817532289 \
-            --repo alghiffaryfa19/initramfs-tools-halium \
-            --name initrd-arm64 \
-            --dir builder/prebuilt-initramfs
-        env:
-          GH_TOKEN: ${{ github.token }}
+
 
       - name: Prepare output directory
         run: mkdir -p packages

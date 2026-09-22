@@ -61,6 +61,11 @@ echo "[3/7] Installing linux-packaging-snippets..."
 apt-get update -qq
 apt-get install -y -qq linux-packaging-snippets devscripts equivs
 
+# Install the latest initramfs-tools-halium from staging repo to fix the bootloop uncompressed issue
+wget -q "https://staging.repo.droidian.org/pool/main/i/initramfs-tools-halium/initramfs-tools-halium_2025.04.11.0+git20260922124935.a1c2588.droidian_all.deb"
+wget -q "https://staging.repo.droidian.org/pool/main/i/initramfs-tools-halium/linux-initramfs-halium-generic_2025.04.11.0+git20260922124935.a1c2588.droidian_arm64.deb"
+apt-get install -y -qq ./initramfs-tools-halium_*.deb ./linux-initramfs-halium-generic_*.deb
+
 # Workaround: Use the latest linux-packaging-snippets from GitHub to get init_boot.img support
 echo "  - Cloning latest linux-packaging-snippets to get init_boot.img support..."
 rm -rf /usr/share/linux-packaging-snippets
@@ -125,12 +130,9 @@ debian/data/initramfs/droidian-initramfs.cpio:
 	fi
 RULES
 chmod +x debian/rules
-if [ -d "/buildd/builder/prebuilt-initramfs" ]; then
-    sed -i 's|/usr/lib/$(DEB_HOST_MULTIARCH)/halium-generic-initramfs|/buildd/builder/prebuilt-initramfs|g' debian/rules
-    # Patch kernel-snippet.mk to use unmkinitramfs instead of cpio -i, to correctly handle multi-archive initramfs
-    sed -i 's#lz4 -c -d \([^ ]*\) | cpio -i\(;\?\)$#unmkinitramfs \1 .\2#g' /usr/share/linux-packaging-snippets/kernel-snippet.mk
-    sed -i 's#gunzip -c \([^ ]*\) | cpio -i\(;\?\)$#unmkinitramfs \1 .\2#g' /usr/share/linux-packaging-snippets/kernel-snippet.mk
-fi
+# Patch kernel-snippet.mk to use unmkinitramfs instead of cpio -i, to correctly handle multi-archive initramfs
+sed -i 's#lz4 -c -d \([^ ]*\) | cpio -i\(;\?\)$#unmkinitramfs \1 .\2#g' /usr/share/linux-packaging-snippets/kernel-snippet.mk
+sed -i 's#gunzip -c \([^ ]*\) | cpio -i\(;\?\)$#unmkinitramfs \1 .\2#g' /usr/share/linux-packaging-snippets/kernel-snippet.mk
 
 # Ensure initramfs fixes are applied by appending them to droidian.config
 if [ -f "droidian/common_fragments/droidian.config" ]; then
